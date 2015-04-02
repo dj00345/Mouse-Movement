@@ -1,148 +1,224 @@
 // CODE I CREATED TO ADD A CREATE LEVEL SCREEN TO THE GAME TO IMPROVE UPON THE RECREATION
 
-class CreateLevelOptionsScreen
+class CreateLevelScreen
     {
-        Texture2D background_pic; //background picture
-        Texture2D PlayGame_pic; //start button picture
-        Texture2D MainMenu_pic; //create level picture
-        Texture2D Resume_pic; //Exit game pic
-        Texture2D empty_pic; //TRANSPARENT PIC
-        Texture2D SaveLevel_pic; //instructions pic
-        private const int TITLE_SCREEN_CELL_WIDTH = 280;
-        private const int TITLE_SCREEN_CELL_HEIGHT = 70;
-        private const int TITLE_SCREEN_GRID_WIDTH = 3;
-        private const int TITLE_SCREEN_GRID_HEIGHT = 9;
-        private BlockState[,] BlockStates = new BlockState[TITLE_SCREEN_GRID_WIDTH, TITLE_SCREEN_GRID_HEIGHT];
-        private MouseState old_mouse_state;
-        private bool button_pressed = false;
+           Texture2D mouse_pic; //background picture
+           Texture2D wall_pic; //start button picture
+           Texture2D block_pic; //create level picture
+           Texture2D void_pic; //Exit game pic
+           char current_selection = 'b'; //the current selection of level editor
+           int create_mode;
 
-        public CreateLevelOptionsScreen()
-        {
-            for (int x = 0; x < TITLE_SCREEN_GRID_WIDTH; x++)
+           KeyboardState old_keyboard_state;   //the old keyboard state
+           KeyboardState keyState = Keyboard.GetState(); //the current keyboard state
+
+           MouseState mouse1 = Mouse.GetState(); //the current mouse state
+           MouseState oldmouse = Mouse.GetState(); //the old mouse state
+           bool leftmouseclick = false; //was the mouse clicked
+           bool rightmouseclick = false;
+           private BlockState[,] BlockStates = new BlockState[GRID_WIDTH, GRID_HEIGHT];
+           private MouseState old_mouse_state;
+           CreateLevelOptionsScreen the_options_screen = new CreateLevelOptionsScreen();
+           private const int GRID_WIDTH = 32;
+           private const int GRID_HEIGHT = 32;
+
+           private int MousePositionX;
+           private int MousePositionY;
+
+           const int GAME_BORDER_WIDTH = 8; //the floor area in the game
+           const int GAME_BORDER_HEIGHT = 8; //the floor area in the game
+
+           //width and height of cell, in pixels
+           private const int CELL_WIDTH = 20;//SCREEN_WIDTH / GRID_WIDTH;
+           private const int CELL_HEIGHT = 20;//SCREEN_HEIGHT / GRID_HEIGHT;
+        
+           //width and height of screen in pixels, since my array is the size of the screen, we need to multiply the array size by each cell size in order to fit the picture in it       
+           const int SCREEN_WIDTH = (GRID_WIDTH * CELL_WIDTH) + 200;
+           const int SCREEN_HEIGHT = GRID_HEIGHT * CELL_HEIGHT;
+
+           private bool key_was_released(Keys key, KeyboardState new_state)
+           {
+               return old_keyboard_state.IsKeyDown(key) && new_state.IsKeyUp(key);
+           }
+            private void to_row_col(float x, float y, out int row, out int col)
             {
-                for (int y = 0; y < TITLE_SCREEN_GRID_HEIGHT; y++)
+                col = (int)(x / CELL_WIDTH);
+                row = (int)(y / CELL_HEIGHT);
+            }
+            public void LoadScreenContent(ContentManager Content)
+            {
+                mouse_pic = Content.Load<Texture2D>(@"media\mouse");
+                wall_pic = Content.Load<Texture2D>(@"media\wall");
+                void_pic = Content.Load<Texture2D>(@"media\void");
+                block_pic = Content.Load<Texture2D>(@"media\block");
+                the_options_screen.LoadScreenContent(Content);
+            }
+            
+            public void Level_Editor_Initialize() //spawns our mouse into the center of the screen. can be changed very easily
+            {
+               
+                for (int x = 0; x < GRID_WIDTH; x++)
                 {
-                    BlockStates[x, y].tile = 'e';
-                    if (x == 0)
+                    for (int y = 0; y < GRID_HEIGHT; y++)
                     {
-                        if (y == 6)
+                        BlockStates[x, y].tile = 'f';
+                        if (x == 0 || x == (GRID_WIDTH - 1))
                         {
-                            BlockStates[x, y].tile = 'p';
+                            BlockStates[x, y].tile = 'w';
                         }
-                        else if (y == 8)
+                        if (y == 0 || y == (GRID_HEIGHT - 1))
                         {
-                            BlockStates[x, y].tile = 's';
+                            BlockStates[x, y].tile = 'w';
+                        }
+                        if (x >= GAME_BORDER_WIDTH && x <= (GRID_WIDTH - GAME_BORDER_WIDTH))
+                        {
+                            if (y >= GAME_BORDER_HEIGHT && y <= (GRID_HEIGHT - GAME_BORDER_HEIGHT)) //sets where the moveable blocks are placed
+                            {
+                                BlockStates[x, y].tile = 'b';
+                            }
                         }
                     }
-                    else if (x == 2)
+                }
+                create_mode = 0;
+                MousePositionX = (GRID_WIDTH / 2);
+                MousePositionY = (GRID_HEIGHT / 2);
+                BlockStates[MousePositionX, MousePositionY].tile = 'm';
+               
+            }
+            public void saveLevel()
+            {
+                // create a writer and open the file
+                TextWriter tw = new StreamWriter("CreatedLevel.txt");
+
+                for (int y = 0; y < GRID_HEIGHT; y++)
+                {
+                  for (int x = 0; x < GRID_WIDTH; x++)
+                  {
+                    // write a line of text to the file
+                    tw.Write(BlockStates[x,y].tile);
+                  }
+                  tw.Write("\n"); 
+                }
+                // close the stream
+                tw.Close();
+                
+            }
+            public void update(GameTime gameTime, ref int GameMode, ref bool newGame, ref bool play_created_level)
+            {
+                MouseState mouse_state = Mouse.GetState();
+                KeyboardState keyState = Keyboard.GetState();
+                int row, col;
+
+                if (create_mode == 1)
+                {
+                    the_options_screen.Update(gameTime, ref create_mode, ref GameMode, this, ref newGame, ref play_created_level);
+                }
+                else
+                {
+                    if (keyState.IsKeyDown(Keys.Escape))
                     {
-                        if (y == 6)
+                        create_mode = 1;
+                    }
+                    if (keyState.IsKeyDown(Keys.D1))
+                    {
+                        current_selection = 'b';
+                    }
+                    else if (keyState.IsKeyDown(Keys.D2))
+                    {
+                        current_selection = 'w';
+                    }
+                    else if (keyState.IsKeyDown(Keys.M))
+                    {
+                        current_selection = 'm';
+                    }
+                    if (mouse_state.LeftButton == ButtonState.Pressed)
+                    {
+                        to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                        if ((row > 0 && row < (GRID_HEIGHT - 1)) && (col > 0 && col < (GRID_WIDTH - 1)))
                         {
-                            BlockStates[x, y].tile = 'r';
+                            leftmouseclick = true;
                         }
-                        if (y == 8)
+                    }
+                    else if (mouse_state.LeftButton == ButtonState.Released &&
+                        old_mouse_state.LeftButton == ButtonState.Pressed)
+                    {
+                        to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                        if ((row > 0 && row < (GRID_HEIGHT - 1)) && (col > 0 && col < (GRID_WIDTH - 1)))
                         {
-                            BlockStates[x, y].tile = 'x';
+                            if (leftmouseclick == true)
+                            {
+                                if (BlockStates[col, row].tile != 'm')
+                                {
+                                    BlockStates[col, row].tile = current_selection;
+                                }
+                                if (current_selection == 'm')
+                                {
+                                    BlockStates[MousePositionX, MousePositionY].tile = 'f';
+                                    MousePositionX = col;
+                                    MousePositionY = row;
+                                    BlockStates[MousePositionX, MousePositionY].tile = 'm';
+                                }
+                            }
+                        }
+                        leftmouseclick = false;
+                    }
+                    if (mouse_state.RightButton == ButtonState.Pressed)
+                    {
+                        to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                        if ((row > 0 && row < (GRID_HEIGHT - 1)) && (col > 0 && col < (GRID_WIDTH - 1)))
+                        {
+                            rightmouseclick = true;
+                        }
+                    }
+                    else if (mouse_state.RightButton == ButtonState.Released &&
+                        old_mouse_state.RightButton == ButtonState.Pressed)
+                    {
+                        to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                        if ((row > 0 && row < (GRID_HEIGHT - 1)) && (col > 0 && col < (GRID_WIDTH - 1)))
+                        {
+                            if (rightmouseclick == true)
+                            {
+                                if (BlockStates[col, row].tile != 'm')
+                                {
+                                    BlockStates[col, row].tile = 'f';
+                                }
+                            }
+                        }
+                        rightmouseclick = false;
+                    }
+                    old_mouse_state = mouse_state;
+                }
+            }
+            public void DrawScreen(SpriteBatch batch, GraphicsDeviceManager graphics)
+            {
+                if (create_mode == 1)
+                {
+                    the_options_screen.DrawScreen(batch, graphics);
+                }
+                else
+                {
+                    for (int y = 0; y < GRID_HEIGHT; y++) //row
+                    {
+                        for (int x = 0; x < GRID_WIDTH; x++) //column
+                        {
+                            Vector2 Grid_Pos = new Vector2(x * CELL_WIDTH, y * CELL_HEIGHT);
+                            switch (BlockStates[x, y].tile) //draws the blocks in
+                            {
+                                case 'b':
+                                    batch.Draw(block_pic, Grid_Pos, Color.White);
+                                    break;
+                                case 'w':
+                                    batch.Draw(wall_pic, Grid_Pos, Color.White);
+                                    break;
+                                case 'm':
+                                    batch.Draw(mouse_pic, Grid_Pos, Color.White);
+                                    break;
+                                case 'f':
+                                    batch.Draw(void_pic, Grid_Pos, Color.White);
+                                    break;
+                            }
                         }
                     }
                 }
             }
-        }
-        private void to_row_col(float x, float y, out int row, out int col)
-        {
-            col = (int)(x / TITLE_SCREEN_CELL_WIDTH);
-            row = (int)(y / TITLE_SCREEN_CELL_HEIGHT);
-        }
-        public void LoadScreenContent(ContentManager Content)
-        {
-            background_pic = Content.Load<Texture2D>(@"media\options");
-            PlayGame_pic = Content.Load<Texture2D>(@"media\play");
-            MainMenu_pic = Content.Load<Texture2D>(@"media\return");
-            Resume_pic = Content.Load<Texture2D>(@"media\continue");
-            empty_pic = Content.Load<Texture2D>(@"media\empty");
-            SaveLevel_pic = Content.Load<Texture2D>(@"media\save");
-        }
-
-        public void Update(GameTime gameTime, ref int CreateMode, ref int GameMode, rodents.CreateLevelScreen CreateLevelPTR, ref bool New_Game, ref bool play_created_level)
-        {
-            MouseState mouse_state = Mouse.GetState();
-            int row, col;
-            if (mouse_state.LeftButton == ButtonState.Pressed)
-            {
-                 to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
-                 if ((row >= 0 && row < TITLE_SCREEN_GRID_HEIGHT) && (col >= 0 && col < TITLE_SCREEN_GRID_WIDTH))
-                 {
-                     if (BlockStates[col, row].tile != 'e')
-                     {
-                         button_pressed = true;
-                     }
-                 }
-            }
-            else if (mouse_state.LeftButton == ButtonState.Released &&
-                old_mouse_state.LeftButton == ButtonState.Pressed)
-            {
-                to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
-                if ((row >= 0 && row < TITLE_SCREEN_GRID_HEIGHT) && (col >= 0 && col < TITLE_SCREEN_GRID_WIDTH))
-                {
-                    if (BlockStates[col, row].tile != 'e' && button_pressed == true)
-                    {
-                        if (BlockStates[col, row].tile == 's')
-                        {
-                            CreateLevelPTR.saveLevel(); 
-                        }
-                        else if (BlockStates[col, row].tile == 'p')
-                        {
-                            CreateLevelPTR.saveLevel();
-                            GameMode = 2;
-                            New_Game = true;
-                            play_created_level = true;
-                            
-                        }
-                        else if (BlockStates[col, row].tile == 'r')
-                        {
-                            CreateMode = 0;
-                        }
-                        else if (BlockStates[col, row].tile == 'x')
-                        {
-                            GameMode = 0;
-                        }
-                    }
-                }
-                button_pressed = false;
-            }
-            old_mouse_state = mouse_state;
-        }
-
-        public void DrawScreen(SpriteBatch spriteBatch, GraphicsDeviceManager graphics)
-        {
-            graphics.GraphicsDevice.Clear(Color.Purple);
-            Vector2 Grid_Position = new Vector2(0, 0);
-            spriteBatch.Draw(background_pic, Grid_Position, Color.White);
-           
-            for (int x = 0; x < TITLE_SCREEN_GRID_WIDTH; x++) //row
-            {
-                for (int y = 0; y < TITLE_SCREEN_GRID_HEIGHT; y++) //column
-                {
-                    Vector2 Options_Grid_Position = new Vector2(x * TITLE_SCREEN_CELL_WIDTH, y * TITLE_SCREEN_CELL_HEIGHT);
-                    switch (BlockStates[x, y].tile) //draws the blocks in
-                    {
-                        case 's':
-                            spriteBatch.Draw(SaveLevel_pic, Options_Grid_Position, Color.White);
-                            break;
-                        case 'p':
-                            spriteBatch.Draw(PlayGame_pic, Options_Grid_Position, Color.White);
-                            break;
-                        case 'e':
-                            spriteBatch.Draw(empty_pic, Options_Grid_Position, Color.White);
-                            break;
-                        case 'x':
-                            spriteBatch.Draw(MainMenu_pic, Options_Grid_Position, Color.White);
-                            break;
-                        case 'r':
-                            spriteBatch.Draw(Resume_pic, Options_Grid_Position, Color.White);
-                            break;
-                    }
-                }
-            }
-        }
     }

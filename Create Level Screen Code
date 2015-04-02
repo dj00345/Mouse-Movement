@@ -1,0 +1,148 @@
+// CODE I CREATED TO ADD A CREATE LEVEL SCREEN TO THE GAME TO IMPROVE UPON THE RECREATION
+
+class CreateLevelOptionsScreen
+    {
+        Texture2D background_pic; //background picture
+        Texture2D PlayGame_pic; //start button picture
+        Texture2D MainMenu_pic; //create level picture
+        Texture2D Resume_pic; //Exit game pic
+        Texture2D empty_pic; //TRANSPARENT PIC
+        Texture2D SaveLevel_pic; //instructions pic
+        private const int TITLE_SCREEN_CELL_WIDTH = 280;
+        private const int TITLE_SCREEN_CELL_HEIGHT = 70;
+        private const int TITLE_SCREEN_GRID_WIDTH = 3;
+        private const int TITLE_SCREEN_GRID_HEIGHT = 9;
+        private BlockState[,] BlockStates = new BlockState[TITLE_SCREEN_GRID_WIDTH, TITLE_SCREEN_GRID_HEIGHT];
+        private MouseState old_mouse_state;
+        private bool button_pressed = false;
+
+        public CreateLevelOptionsScreen()
+        {
+            for (int x = 0; x < TITLE_SCREEN_GRID_WIDTH; x++)
+            {
+                for (int y = 0; y < TITLE_SCREEN_GRID_HEIGHT; y++)
+                {
+                    BlockStates[x, y].tile = 'e';
+                    if (x == 0)
+                    {
+                        if (y == 6)
+                        {
+                            BlockStates[x, y].tile = 'p';
+                        }
+                        else if (y == 8)
+                        {
+                            BlockStates[x, y].tile = 's';
+                        }
+                    }
+                    else if (x == 2)
+                    {
+                        if (y == 6)
+                        {
+                            BlockStates[x, y].tile = 'r';
+                        }
+                        if (y == 8)
+                        {
+                            BlockStates[x, y].tile = 'x';
+                        }
+                    }
+                }
+            }
+        }
+        private void to_row_col(float x, float y, out int row, out int col)
+        {
+            col = (int)(x / TITLE_SCREEN_CELL_WIDTH);
+            row = (int)(y / TITLE_SCREEN_CELL_HEIGHT);
+        }
+        public void LoadScreenContent(ContentManager Content)
+        {
+            background_pic = Content.Load<Texture2D>(@"media\options");
+            PlayGame_pic = Content.Load<Texture2D>(@"media\play");
+            MainMenu_pic = Content.Load<Texture2D>(@"media\return");
+            Resume_pic = Content.Load<Texture2D>(@"media\continue");
+            empty_pic = Content.Load<Texture2D>(@"media\empty");
+            SaveLevel_pic = Content.Load<Texture2D>(@"media\save");
+        }
+
+        public void Update(GameTime gameTime, ref int CreateMode, ref int GameMode, rodents.CreateLevelScreen CreateLevelPTR, ref bool New_Game, ref bool play_created_level)
+        {
+            MouseState mouse_state = Mouse.GetState();
+            int row, col;
+            if (mouse_state.LeftButton == ButtonState.Pressed)
+            {
+                 to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                 if ((row >= 0 && row < TITLE_SCREEN_GRID_HEIGHT) && (col >= 0 && col < TITLE_SCREEN_GRID_WIDTH))
+                 {
+                     if (BlockStates[col, row].tile != 'e')
+                     {
+                         button_pressed = true;
+                     }
+                 }
+            }
+            else if (mouse_state.LeftButton == ButtonState.Released &&
+                old_mouse_state.LeftButton == ButtonState.Pressed)
+            {
+                to_row_col(mouse_state.X, mouse_state.Y, out row, out col);
+                if ((row >= 0 && row < TITLE_SCREEN_GRID_HEIGHT) && (col >= 0 && col < TITLE_SCREEN_GRID_WIDTH))
+                {
+                    if (BlockStates[col, row].tile != 'e' && button_pressed == true)
+                    {
+                        if (BlockStates[col, row].tile == 's')
+                        {
+                            CreateLevelPTR.saveLevel(); 
+                        }
+                        else if (BlockStates[col, row].tile == 'p')
+                        {
+                            CreateLevelPTR.saveLevel();
+                            GameMode = 2;
+                            New_Game = true;
+                            play_created_level = true;
+                            
+                        }
+                        else if (BlockStates[col, row].tile == 'r')
+                        {
+                            CreateMode = 0;
+                        }
+                        else if (BlockStates[col, row].tile == 'x')
+                        {
+                            GameMode = 0;
+                        }
+                    }
+                }
+                button_pressed = false;
+            }
+            old_mouse_state = mouse_state;
+        }
+
+        public void DrawScreen(SpriteBatch spriteBatch, GraphicsDeviceManager graphics)
+        {
+            graphics.GraphicsDevice.Clear(Color.Purple);
+            Vector2 Grid_Position = new Vector2(0, 0);
+            spriteBatch.Draw(background_pic, Grid_Position, Color.White);
+           
+            for (int x = 0; x < TITLE_SCREEN_GRID_WIDTH; x++) //row
+            {
+                for (int y = 0; y < TITLE_SCREEN_GRID_HEIGHT; y++) //column
+                {
+                    Vector2 Options_Grid_Position = new Vector2(x * TITLE_SCREEN_CELL_WIDTH, y * TITLE_SCREEN_CELL_HEIGHT);
+                    switch (BlockStates[x, y].tile) //draws the blocks in
+                    {
+                        case 's':
+                            spriteBatch.Draw(SaveLevel_pic, Options_Grid_Position, Color.White);
+                            break;
+                        case 'p':
+                            spriteBatch.Draw(PlayGame_pic, Options_Grid_Position, Color.White);
+                            break;
+                        case 'e':
+                            spriteBatch.Draw(empty_pic, Options_Grid_Position, Color.White);
+                            break;
+                        case 'x':
+                            spriteBatch.Draw(MainMenu_pic, Options_Grid_Position, Color.White);
+                            break;
+                        case 'r':
+                            spriteBatch.Draw(Resume_pic, Options_Grid_Position, Color.White);
+                            break;
+                    }
+                }
+            }
+        }
+    }

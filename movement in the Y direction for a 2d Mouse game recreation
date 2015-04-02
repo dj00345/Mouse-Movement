@@ -1,0 +1,139 @@
+private void move_ratY(int movement, BlockState[,] BlockStates, ref int score, ref int player_lives) //moves the mouse according to Y
+        {
+            if (rat_posY >= 0 || rat_posY < GridHeight) //while in the game area
+            {
+                if (BlockStates[rat_posX, rat_posY + movement].tile != 'w') //checks to make sure the mouse position + movement is not a wall according to Y
+                {
+                    if (movement == -1) //mouse moves up
+                    {
+                        if (BlockStates[rat_posX, rat_posY + movement].tile != 'p')
+                        {
+                            if (BlockStates[rat_posX, rat_posY + movement].tile == 'c')
+                            {
+                                Get_Cheese(ref score);
+                                BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                rat_posY = rat_posY + movement; //new mouse position
+                                mouse_angle = (float)(3 * Math.PI / 2);
+                                mouse_flip = false;
+                            }
+                            else
+                            {
+                                for (int y = rat_posY; y > 0; y--) //loop
+                                {
+                                    if (BlockStates[rat_posX, y].tile != 'p' && BlockStates[rat_posX, y].tile != 'w')
+                                    {
+                                        if (BlockStates[rat_posX, y].tile == 'f')
+                                        {
+                                            // Now move the blocks to the mouse position
+                                            while (y != rat_posY) //while not the mouse position
+                                            {
+                                                BlockStates[rat_posX, y].tile = 'b'; //place the block
+                                                y++;
+                                            }
+                                            BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                            BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                            rat_posY = rat_posY + movement; //new mouse position
+                                            mouse_angle = (float)(3 * Math.PI / 2);
+                                            mouse_flip = false;
+                                            break;
+                                        }
+                                        else if (BlockStates[rat_posX, y].tile == 'c')
+                                        {
+                                            CheeseLeft--;
+                                            Game_Win();
+                                            // Now move the blocks to the mouse position
+                                            while (y != rat_posY) //while not the mouse position
+                                            {
+                                                BlockStates[rat_posX, y].tile = 'b'; //place the block
+                                                y++;
+                                            }
+                                            BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                            BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                            rat_posY = rat_posY + movement; //new mouse position
+                                            mouse_angle = (float)(3 * Math.PI / 2);
+                                            mouse_flip = false;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (BlockStates[rat_posX, rat_posY + movement].tile == 'p')
+                        {
+                            BlockStates[rat_posX, rat_posY].tile = 'f';
+                            MarkMouseDead(BlockStates, ref player_lives);
+                        }
+                    }
+                    else if (movement == 1) //moves moves down
+                    {
+                        if (BlockStates[rat_posX, rat_posY + movement].tile != 'p')
+                        {
+                            if (BlockStates[rat_posX, rat_posY + movement].tile == 'c')
+                            {
+                                Get_Cheese(ref score);
+                                BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                rat_posY = rat_posY + movement; //new mouse position
+                                mouse_angle = (float)(Math.PI / 2);
+                                mouse_flip = false;
+                            }
+                            else
+                            {
+                                for (int y = rat_posY; y < GridHeight; y++) //loop
+                                {
+                                    if (BlockStates[rat_posX, y].tile != 'p' && BlockStates[rat_posX, y].tile != 'w')
+                                    {
+                                        if (BlockStates[rat_posX, y].tile == 'f')
+                                        {
+                                            // Now move the blocks to the mouse position
+                                            while (y != rat_posY) //while not the mouse position
+                                            {
+                                                BlockStates[rat_posX, y].tile = 'b'; //place the block
+                                                y--;
+                                            }
+                                            BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                            BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                            rat_posY = rat_posY + movement; //new mouse position
+                                            mouse_angle = (float)(Math.PI / 2);
+                                            mouse_flip = false;
+                                            break;
+                                        }
+                                        else if (BlockStates[rat_posX, y].tile == 'c')
+                                        {
+                                            CheeseLeft--;
+                                            Game_Win();
+                                            // Now move the blocks to the mouse position
+                                            while (y != rat_posY) //while not the mouse position
+                                            {
+                                                BlockStates[rat_posX, y].tile = 'b'; //place the block
+                                                y--;
+                                            }
+                                            BlockStates[rat_posX, rat_posY + movement].tile = 'm'; //move the mouse
+                                            BlockStates[rat_posX, rat_posY].tile = 'f'; //place a floor behind the mouse
+                                            rat_posY = rat_posY + movement; //new mouse position
+                                            mouse_angle = (float)(Math.PI / 2);
+                                            mouse_flip = false;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else if (BlockStates[rat_posX, rat_posY + movement].tile == 'p')
+                        {
+                            BlockStates[rat_posX, rat_posY].tile = 'f';
+                            MarkMouseDead(BlockStates, ref player_lives);
+                        }
+                    }
+                }
+            }
+        }
